@@ -54,7 +54,7 @@ int exec(int argc, char* argv[]) {
     int max_iterations = 20;
 
 	  cudaSetDevice(0);
-    GraphStd<vert_t, vert_t> graph(UNDIRECTED);
+    GraphStd<vert_t, vert_t> graph(DIRECTED);
 
     HornetInit* hornet_init;
 
