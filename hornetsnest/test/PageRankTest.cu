@@ -24,7 +24,7 @@ int exec(int argc, char* argv[]) {
                            graph.csr_out_edges());
     HornetGraph hornet_graph(hornet_init);
 
-    StaticPageRank page_rank(hornet_graph, 50, 0.001, 0.85, false);
+    StaticPageRank page_rank(hornet_graph, 500, 1e-10, 0.85, false);
 
     Timer<DEVICE> TM;
     TM.start();
@@ -43,7 +43,7 @@ int exec(int argc, char* argv[]) {
                            graphUnDir.csr_out_edges());
     HornetGraph hornet_graph_undir(hornet_init_undir);
 
-    StaticPageRank page_rank_undir(hornet_graph_undir, 50, 0.001,0.85,true);
+    StaticPageRank page_rank_undir(hornet_graph_undir, 500, 1e-10, 0.85, true);
 
     TM.start();
 
