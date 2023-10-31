@@ -40,6 +40,7 @@
 #include <StandardAPI.hpp>
 #include <Device/Util/Timer.cuh>
 #include <Graph/GraphStd.hpp>
+#include <chrono>
 
 template <typename HornetGraph,typename Katz>
 int exec(int argc, char* argv[]) {
@@ -58,8 +59,12 @@ int exec(int argc, char* argv[]) {
     HornetInit* hornet_init;
 
     if(argc>1){
+      auto  t0 = std::chrono::high_resolution_clock::now();
       graph.read(argv[1], SORT | PRINT_INFO);
       hornet_init = new HornetInit(graph.nV(), graph.nE(), graph.csr_out_offsets(), graph.csr_out_edges());
+      auto  t1 = std::chrono::high_resolution_clock::now();
+      float tr = std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count() / 1000.0f;
+      printf("Time to read graph file: %fms\n", tr);
     }else{
 
       max_iterations=20;
@@ -89,8 +94,11 @@ int exec(int argc, char* argv[]) {
 
 
     // HornetInit hornet_init(graph.nV(), graph.nE(), graph.csr_out_offsets(), graph.csr_out_edges());
-
+    auto  t2 = std::chrono::high_resolution_clock::now();
     HornetGraph hornet_graph(*hornet_init);
+    auto  t3 = std::chrono::high_resolution_clock::now();
+    float ti = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2).count() / 1000.0f;
+    printf("Time to initialize Hornet: %fms\n", ti);
      // Finding largest vertex degreemake
     degree_t max_degree_vertex = hornet_graph.max_degree();
     std::cout << "Max degree vextex is " << max_degree_vertex << std::endl;
