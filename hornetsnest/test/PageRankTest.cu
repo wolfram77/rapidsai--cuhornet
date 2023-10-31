@@ -6,8 +6,38 @@
 #include <StandardAPI.hpp>
 #include <Graph/GraphStd.hpp>
 #include <Util/CommandLineParam.hpp>
+#include <iostream>
+#include <fstream>
+#include <string>
+
+#include <cmath>
+#include <vector>
+#include <omp.h>
 
 using namespace hornets_nest;
+
+
+
+
+/**
+ * Compute the L1-norm of the difference of two arrays in parallel.
+ * @param x an array
+ * @param y another array
+ * @param N size of arrays
+ * @param a initial value
+ * @returns ||x-y||_1
+ */
+template <class TX, class TY, class TA=TX>
+inline TA l1NormDeltaOmp(const TX *x, const TY *y, size_t N, TA a=TA()) {
+  // ASSERT(x && y);
+  #pragma omp parallel for schedule(auto) reduction(+:a)
+  for (size_t i=0; i<N; ++i)
+    a += TA(std::abs(x[i] - y[i]));
+  return a;
+}
+
+
+
 
 int exec(int argc, char* argv[]) {
     using namespace timer;
@@ -24,7 +54,7 @@ int exec(int argc, char* argv[]) {
                            graph.csr_out_edges());
     HornetGraph hornet_graph(hornet_init);
 
-    StaticPageRank page_rank(hornet_graph, 50, 0.001, 0.85, false);
+    StaticPageRank page_rank(hornet_graph, 500, 1e-10, 0.85, false);
 
     Timer<DEVICE> TM;
     TM.start();
@@ -34,23 +64,34 @@ int exec(int argc, char* argv[]) {
     TM.stop();
     TM.print("PR---InputAsIS");
 
+    // Retrieve pagerank values from device
+    const pr_t *ranks = page_rank.get_page_rank_score_host();
 
-	graph::ParsingProp flag = PRINT_INFO | SORT;
-	        graph::GraphStd<vid_t, eoff_t> graphUnDir(UNDIRECTED);
-    graphUnDir.read(argv[1],flag);
+    // Run reference PageRank
+    StaticPageRank page_rank_ref(hornet_graph, 500, 0, 0.85, false);
+    page_rank_ref.run();
+    const pr_t *ranks_ref = page_rank_ref.get_page_rank_score_host();
 
-    HornetInit hornet_init_undir(graphUnDir.nV(), graphUnDir.nE(), graphUnDir.csr_out_offsets(),
-                           graphUnDir.csr_out_edges());
-    HornetGraph hornet_graph_undir(hornet_init_undir);
+    // Compare pagerank values with reference
+    pr_t diff = l1NormDeltaOmp(ranks, ranks_ref, graph.nV());
+    printf("Error: %.2e\n", diff);
 
-    StaticPageRank page_rank_undir(hornet_graph_undir, 50, 0.001,0.85,true);
+	// graph::ParsingProp flag = PRINT_INFO | SORT;
+	//         graph::GraphStd<vid_t, eoff_t> graphUnDir(UNDIRECTED);
+  //   graphUnDir.read(argv[1],flag);
 
-    TM.start();
+  //   HornetInit hornet_init_undir(graphUnDir.nV(), graphUnDir.nE(), graphUnDir.csr_out_offsets(),
+  //                          graphUnDir.csr_out_edges());
+  //   HornetGraph hornet_graph_undir(hornet_init_undir);
 
-    page_rank_undir.run();
+  //   StaticPageRank page_rank_undir(hornet_graph_undir, 500, 1e-10, 0.85, true);
 
-    TM.stop();
-    TM.print("PR---Undirected---PULL");
+  //   TM.start();
+
+  //   page_rank_undir.run();
+
+  //   TM.stop();
+  //   TM.print("PR---Undirected---PULL");
 
 
 

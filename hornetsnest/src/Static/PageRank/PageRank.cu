@@ -127,7 +127,7 @@ void StaticPageRank::run() {
 		}
 		forAllnumV(hornet, DampAndDiffAndCopy { hd_prdata });
 
-		forAllnumV(hornet, Sum { hd_prdata });
+		forAllnumV(hornet, Max { hd_prdata });
 		hd_prdata.sync();
 
         host::copyFromDevice(hd_prdata().reduction_out, h_out);
