@@ -1,3 +1,7 @@
+## Generated files
+*.log
+*.csv
+
 ## Common
 __pycache__
 *.pyc
@@ -18,7 +22,7 @@ Debug
 build/
 hornet/build/
 hornetsnest/build
-	
+
 ## Eclipse IDE
 .project
 .cproject
