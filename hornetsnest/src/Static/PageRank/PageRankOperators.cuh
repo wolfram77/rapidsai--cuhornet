@@ -114,11 +114,33 @@ struct DampAndDiffAndCopy {
 
 //------------------------------------------------------------------------------
 
+__device__ static float atomicMax(float* address, float val) {
+    int* address_as_i = (int*) address;
+    int old = *address_as_i, assumed;
+    do {
+        assumed = old;
+        old = ::atomicCAS(address_as_i, assumed,
+            __float_as_int(::fmaxf(val, __int_as_float(assumed))));
+    } while (assumed != old);
+    return __int_as_float(old);
+}
+// REF: https://stackoverflow.com/a/17401122/1413259
+
 struct Sum {
     HostDeviceVar<PrData> hd_prdata;
 
     OPERATOR(vid_t src) {
         atomicAdd(hd_prdata().reduction_out, hd_prdata().abs_diff[src]);
+    }
+};
+
+//------------------------------------------------------------------------------
+
+struct Max {
+    HostDeviceVar<PrData> hd_prdata;
+
+    OPERATOR(vid_t src) {
+        atomicMax(hd_prdata().reduction_out, hd_prdata().abs_diff[src]);
     }
 };
 
